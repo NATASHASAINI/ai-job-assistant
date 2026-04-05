@@ -1,0 +1,11 @@
+beautifulsoup4
+requests
+langchain
+openai
+pydantic
+python-dotenv
+lxml
+
+
+
+
