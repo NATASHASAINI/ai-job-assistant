@@ -1,4 +1,0 @@
-
-Data Scientist with 3 years of experience in machine learning, NLP, and data analysis.
-Skilled in Python, TensorFlow, Pandas, and SQL.
-Built predictive models and deployed APIs using FastAPI.

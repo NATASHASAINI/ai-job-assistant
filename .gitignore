@@ -60,7 +60,9 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-
+venv/
+__pycache__/
+*.pyc
 # Flask stuff:
 instance/
 .webassets-cache
@@ -205,3 +207,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+resume.txt
