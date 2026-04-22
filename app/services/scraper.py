@@ -3,11 +3,15 @@ from bs4 import BeautifulSoup
 
 def scrape_job_description(url: str) -> str:
     headers = {"User-Agent": "Mozilla/5.0"}
-    res = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=10)
 
-    soup = BeautifulSoup(res.text, "html.parser")
+    soup = BeautifulSoup(response.text, "html.parser")
 
-    for tag in soup(["script", "style", "nav", "footer"]):
+    # remove junk
+    for tag in soup(["script", "style", "nav", "footer", "header"]):
         tag.decompose()
 
-    return " ".join(soup.get_text().split())
+    text = soup.get_text(separator=" ")
+    clean_text = " ".join(text.split())
+
+    return clean_text[:8000]  # limit tokens

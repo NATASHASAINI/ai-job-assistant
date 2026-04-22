@@ -1,35 +1,32 @@
-def resume_prompt(resume, job):
-    return f"""
-You are a recruiter.
+RESUME_SCORE_PROMPT = """
+You are an expert recruiter.
 
-Return ONLY JSON:
-{{
-  "score": 0-100,
-  "suggestions": []
-}}
+Compare resume with job description.
 
-RESUME:
+Return STRICT JSON only:
+
+{
+  "score": <integer 0-100>,
+  "suggestions": [<string>, <string>]
+}
+
+Resume:
 {resume}
 
-JOB:
+Job Description:
 {job}
 """
 
-
-def tailored_prompt(profile, job, question):
-    return f"""
+TAILORED_ANSWER_PROMPT = """
 You are a career coach.
 
-Write a strong answer.
+Write a strong professional answer to:
 
-PROFILE:
-{profile}
+Question: {question}
 
-JOB:
-{job}
+Based on:
+Profile: {profile}
+Job Description: {job}
 
-QUESTION:
-{question}
-
-Return only final answer.
+Keep it concise and compelling.
 """

@@ -1,8 +1,17 @@
-from typing import List, Dict, Any
+from pydantic import BaseModel
+from typing import List
 
-UserProfile = Dict[str, Any]
+class ResumeScoreRequest(BaseModel):
+    resume: str
+    job_url: str
 
-ResumeScoreOutput = {
-    "score": int,
-    "suggestions": List[str]
-}
+
+class AnswerRequest(BaseModel):
+    profile: dict
+    job_url: str
+    question: str
+
+
+class ResumeScoreResponse(BaseModel):
+    score: int
+    suggestions: List[str]
