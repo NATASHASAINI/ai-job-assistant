@@ -1,17 +1,47 @@
 import requests
 from bs4 import BeautifulSoup
 
-def scrape_job_description(url: str) -> str:
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers, timeout=10)
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+# ----------------------------
+# STEP 1: Get job links
+# ----------------------------
+def get_job_links(company_url: str):
+    response = requests.get(company_url, headers=HEADERS)
+
+    if response.status_code != 200:
+        return []
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # remove junk
-    for tag in soup(["script", "style", "nav", "footer", "header"]):
-        tag.decompose()
+    links = set()
 
-    text = soup.get_text(separator=" ")
-    clean_text = " ".join(text.split())
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
 
-    return clean_text[:8000]  # limit tokens
+        # keep only job links
+        if "lever.co" in href and href != company_url:
+            links.add(href)
+
+    return list(links)
+
+
+# ----------------------------
+# STEP 2: Scrape job page
+# ----------------------------
+def scrape_job_description(job_url: str):
+    response = requests.get(job_url, headers=HEADERS)
+
+    if response.status_code != 200:
+        return {"error": "Job page not accessible"}
+
+    if "job you're looking for" in response.text.lower():
+        return {"error": "Job expired or removed"}
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    text = soup.get_text(separator="\n")
+
+    return text
