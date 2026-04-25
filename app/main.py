@@ -8,9 +8,9 @@ import json
 import os
 
 # =========================
-# APP
+# FASTAPI APP
 # =========================
-app = FastAPI(title="AI Job Assistant Brain")
+app = FastAPI()
 
 
 # =========================
@@ -36,38 +36,35 @@ class AnswerRequest(BaseModel):
 
 class ResumeScoreOutput(BaseModel):
     score: int
-    strengths: List[str]
-    weaknesses: List[str]
     suggestions: List[str]
 
 
 # =========================
-# TOOL: SCRAPER
+# SCRAPER TOOL
 # =========================
 
 def scrape_job_description(url: str) -> str:
     headers = {"User-Agent": "Mozilla/5.0"}
-    res = requests.get(url, headers=headers, timeout=10)
-
-    soup = BeautifulSoup(res.text, "html.parser")
+    response = requests.get(url, headers=headers, timeout=10)
+    soup = BeautifulSoup(response.text, "html.parser")
 
     for tag in soup(["script", "style", "nav", "footer", "header"]):
         tag.decompose()
 
     text = soup.get_text(separator=" ")
-    clean = " ".join(text.split())
-    return clean[:12000]
+    clean_text = " ".join(text.split())
+    return clean_text[:12000]
 
 
 # =========================
-# LLM CORE
+# LLM CALL
 # =========================
 
 def call_llm(prompt: str) -> str:
     response = openai.ChatCompletion.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are an expert AI career assistant."},
+            {"role": "system", "content": "You are an expert career AI assistant."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3
@@ -76,21 +73,26 @@ def call_llm(prompt: str) -> str:
 
 
 # =========================
-# PROMPTS (FEW-SHOT)
+# PROMPTS (FEW-SHOT STYLE)
 # =========================
 
-def resume_prompt(resume: str, job: str) -> str:
+def build_resume_score_prompt(resume: str, job: str) -> str:
     return f"""
-You are a strict AI recruiter.
+You are a resume evaluator.
 
 Return ONLY valid JSON:
-
 {{
-  "score": 0-100,
-  "strengths": [],
-  "weaknesses": [],
-  "suggestions": []
+  "score": integer (0-100),
+  "suggestions": [string]
 }}
+
+Example:
+Resume: Python, ML
+Job: Python, ML, AWS
+Output:
+{{"score": 85, "suggestions": ["Add AWS experience"]}}
+
+NOW:
 
 Resume:
 {resume}
@@ -100,7 +102,7 @@ Job:
 """
 
 
-def answer_prompt(profile: dict, job: str, question: str) -> str:
+def build_answer_prompt(profile: dict, job: str, question: str) -> str:
     return f"""
 You are a senior career coach.
 
@@ -113,7 +115,7 @@ JOB:
 QUESTION:
 {question}
 
-Write a natural, confident answer (120–180 words).
+Write a strong, natural answer. No fluff.
 """
 
 
@@ -121,42 +123,33 @@ Write a natural, confident answer (120–180 words).
 # PARSER
 # =========================
 
-def parse_resume(raw: str) -> ResumeScoreOutput:
+def parse_score(raw: str) -> ResumeScoreOutput:
     try:
         data = json.loads(raw)
         return ResumeScoreOutput(**data)
     except:
-        return ResumeScoreOutput(
-            score=0,
-            strengths=[],
-            weaknesses=[],
-            suggestions=["Parsing failed"]
-        )
+        return ResumeScoreOutput(score=0, suggestions=["Failed to parse LLM output"])
 
 
 # =========================
-# AGENT 1: RESUME SCORER
+# AGENTS
 # =========================
 
 def resume_scorer(resume_text: str, job_url: str):
     job = scrape_job_description(job_url)
-    prompt = resume_prompt(resume_text, job)
+    prompt = build_resume_score_prompt(resume_text, job)
     raw = call_llm(prompt)
-    return parse_resume(raw)
+    return parse_score(raw)
 
-
-# =========================
-# AGENT 2: ANSWER GENERATOR
-# =========================
 
 def generate_answer(profile: dict, job_url: str, question: str):
     job = scrape_job_description(job_url)
-    prompt = answer_prompt(profile, job, question)
+    prompt = build_answer_prompt(profile, job, question)
     return call_llm(prompt)
 
 
 # =========================
-# ROOT
+# ROOT ROUTE
 # =========================
 
 @app.get("/")
@@ -165,11 +158,11 @@ def home():
 
 
 # =========================
-# API ENDPOINTS
+# API ROUTES
 # =========================
 
 @app.post("/resume-score")
-def resume_score(req: ResumeScoreRequest):
+def score(req: ResumeScoreRequest):
     return resume_scorer(req.resume_text, req.job_url).dict()
 
 
