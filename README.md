@@ -74,6 +74,8 @@ to analyze resumes and generate personalized job insights.
                     │ Final JSON Response  │
                     └──────────────────────┘
 ```
+<img width="977" height="791" alt="Screenshot 2026-04-26 at 1 41 25 PM" src="https://github.com/user-attachments/assets/78606932-67e8-4a52-834d-b43c61fb23b5" />
+
 ## 🌟 Features
 
 ### 🧠 Resume Intelligence Agent
